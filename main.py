@@ -101,3 +101,13 @@ def sleep_check(hours: float):
 @app.get("/resources")
 def get_resources():
     return {"campus_resources": resources}
+
+from fastapi import Header, Cookie
+
+@app.get("/header-test")
+def header_test(x_campus: str = Header(...)):
+    return {"X-Campus": x_campus}
+
+@app.get("/cookie-test")
+def cookie_test(session_id: str = Cookie(default="none")):
+    return {"session_id": session_id}
