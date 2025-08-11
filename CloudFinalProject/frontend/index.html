@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Guitar Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <h1>Guitar Shop Storefront (Local Cloud)</h1>
+
+    <section>
+      <h2>Login</h2>
+      <input id="username" placeholder="username" />
+      <input id="password" placeholder="password" type="password" />
+      <button onclick="login()">Login</button>
+      <pre id="loginResult"></pre>
+    </section>
+
+    <section>
+      <h2>Who Am I?</h2>
+      <button onclick="whoami()">/api/auth/me</button>
+      <pre id="meResult"></pre>
+    </section>
+
+    <section>
+      <h2>Products</h2>
+      <button onclick="listProducts()">List</button>
+      <button onclick="addProduct()">Add Sample Product</button>
+      <pre id="productsResult"></pre>
+    </section>
+
+    <section>
+      <h2>Email Test</h2>
+      <button onclick="sendEmail()">Send Test Email</button>
+      <p>Open MailHog UI at <a href="http://localhost:8025" target="_blank">localhost:8025</a></p>
+      <pre id="emailResult"></pre>
+    </section>
+
+    <section>
+      <h2>File Upload</h2>
+      <input type="file" id="fileInput" />
+      <button onclick="uploadFile()">Upload</button>
+      <pre id="fileResult"></pre>
+      <p>Open MinIO console at <a href="http://localhost:9001" target="_blank">localhost:9001</a></p>
+    </section>
+
+    <script>
+      async function login() {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ username: document.getElementById('username').value, password: document.getElementById('password').value }),
+        });
+        document.getElementById('loginResult').textContent = await res.text();
+      }
+      async function whoami() {
+        const res = await fetch('/api/auth/me');
+        document.getElementById('meResult').textContent = await res.text();
+      }
+      async function listProducts() {
+        const res = await fetch('/api/products');
+        document.getElementById('productsResult').textContent = await res.text();
+      }
+      async function addProduct() {
+        const res = await fetch('/api/products', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ name: 'Stratocaster', price: 1299.99 })
+        });
+        document.getElementById('productsResult').textContent = await res.text();
+      }
+      async function sendEmail() {
+        const res = await fetch('/api/util/send-email', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ to: 'customer@example.com', subject: 'Welcome', body: 'Thanks for visiting our Guitar Shop!' })
+        });
+        document.getElementById('emailResult').textContent = await res.text();
+      }
+      async function uploadFile() {
+        const f = document.getElementById('fileInput').files[0];
+        const form = new FormData();
+        form.append('file', f);
+        const res = await fetch('/api/files/upload', { method: 'POST', body: form });
+        document.getElementById('fileResult').textContent = await res.text();
+      }
+    </script>
+  </body>
+</html>
