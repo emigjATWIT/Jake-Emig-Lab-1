@@ -1,0 +1,51 @@
+services:
+  # MinIO object storage (S3-compatible)
+  minio:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  # Redis for shared memory / key-value store
+  redis:
+    image: redis:7-alpine
+    platform: linux/arm64
+    ports:
+      - "6380:6379"   # host port 6380 avoids conflict with existing Redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  # MailHog to receive emails so we can view them in a local web UI
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    platform: linux/amd64
+    ports:
+      - "8025:8025"   # Web UI
+      - "1125:1025"   # map host 1125 -> container 1025 to avoid host conflict
+    restart: unless-stopped
+
+  # Postfix SMTP server (receives on port 25, relays to MailHog)
+  postfix:
+    image: boky/postfix:latest
+    environment:
+      ALLOW_EMPTY_SENDER: "yes"
+      MYHOSTNAME: ${POSTFIX_HOSTNAME}
+      RELAYHOST: "[mailhog]:1025"  # internal container port stays 1025
+    ports:
+      - "2525:25"  # Expose Postfix SMTP on host port 2525
+    depends_on:
+      - mailhog
+    restart: unless-stopped
+
+volumes:
+  minio-data:
+  redis-data:
